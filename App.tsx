@@ -1,118 +1,143 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import {Button, Image, StyleSheet, View} from 'react-native';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {open} from '@op-engineering/op-sqlite';
+import { useEffect } from 'react';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+export default function HomeScreen() {
+  const db = open({
+    name: 'myDB',
+    location: '../files/databases',
+  });
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  function createTable() {
+    db.execute(
+      `
+        CREATE TABLE IF NOT EXISTS Users (
+          idUser INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT
+        );
+      `,
+    );
+  }
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  function insertData() {
+    db.execute(
+      `
+        INSERT INTO Users(
+          name
+        ) VALUES (?);
+      `,
+      ["John"]
+    );
+  }
+
+  function dropTable() {
+      // const db = open(localdbConfig.inspection);
+
+      try {
+        db.execute(`DROP TABLE IF EXISTS Users;`);
+      } catch (error) {
+        console.log(error, 'deleting tables');
+      } finally {
+        // db.close();
+      }
+  }
+
+  function viewTable() {
+      // const db = open(localdbConfig.inspection);
+
+      try {
+        const result = db.execute(`SELECT * FROM Users;`);
+        console.log(JSON.stringify(result));
+      } catch (error) {
+        console.log(error, 'deleting tables');
+      } finally {
+        // db.close();
+      }
+  }
+
+  function updateRow() {
+      // const db = open(localdbConfig.inspection);
+
+      try {
+        const result = db.execute(`UPDATE Users SET name = ? WHERE idUser = 1;`,['Andy']);
+        console.log(JSON.stringify(result));
+      } catch (error) {
+        console.log(error, 'deleting tables');
+      } finally {
+        // db.close();
+      }
+  }
+
+  useEffect(() => {
+    const unsubscribe = db.reactiveExecute({
+      query: `SELECT * FROM Users`,
+      arguments: [],
+      fireOn: [
+        {
+          table: 'Users',
+        },
+      ],
+      callback: users => {
+        console.log({halo: users});
+      },
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(()=>{
+    let rowid = db.execute('SELECT rowid FROM Users WHERE idUser = 1');
+    // console.log(rowid.item(0).rowid) => UNDEFINED
+
+    // let unsubscribe = db.reactiveExecute({
+    //   query: 'SELECT * FROM Users WHERE idUser = ?',
+    //   arguments: [1],
+    //   fireOn: [
+    //     {
+    //       table: 'Users',
+    //       ids: [rowid],
+    //     },
+    //   ],
+    //   callback: (userResponse) => {
+    //     console.log(userResponse.item(0)); // should print the user whenever it updates
+    //   }
+    // })
+
+    return () => {
+      // unsubscribe();
+    };
+
+  },[])
+
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View  style={{flex:1}}>
+      <Button title="Create Table" onPress={createTable}/>
+      <Button title="Insert Data" onPress={insertData}/>
+      <Button title="Drop Table" onPress={dropTable}/>
+      <Button title="View Table" onPress={viewTable}/>
+      <Button title="Update Row" onPress={updateRow}/>
     </View>
   );
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  stepContainer: {
+    gap: 8,
+    marginBottom: 8,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  reactLogo: {
+    height: 178,
+    width: 290,
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
   },
 });
-
-export default App;
