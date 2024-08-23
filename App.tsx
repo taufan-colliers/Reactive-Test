@@ -89,7 +89,7 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(()=>{
-    let rowid = db.execute('SELECT rowid FROM Users WHERE idUser = 1');
+    // let rowid = db.execute('SELECT rowid FROM Users WHERE idUser = 1');
     // console.log(rowid.item(0).rowid) => UNDEFINED
 
     // let unsubscribe = db.reactiveExecute({
@@ -114,8 +114,10 @@ export default function HomeScreen() {
 
   return (
     <View  style={{flex:1}}>
+      <View style={{paddingVertical:24}}/>
       <Button title="Create Table" onPress={createTable}/>
       <Button title="Insert Data" onPress={insertData}/>
+      <Button title="Insert Data From Another File" onPress={insertDataExt}/>
       <Button title="Drop Table" onPress={dropTable}/>
       <Button title="View Table" onPress={viewTable}/>
       <Button title="Update Row" onPress={updateRow}/>
@@ -123,21 +125,19 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+function insertDataExt(){
+
+  const db = open({
+    name: 'myDB',
+    location: '../files/databases',
+  });
+
+  db.execute(
+    `
+      INSERT INTO Users(
+        name
+      ) VALUES (?);
+    `,
+    ["John"]
+  );
+}
